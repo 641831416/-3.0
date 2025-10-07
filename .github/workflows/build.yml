@@ -25,19 +25,32 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Download Gradle Wrapper JAR
+    - name: Verify project structure
       run: |
         cd IPTVApp
-        curl -L -o gradle/wrapper/gradle-wrapper.jar \
-        https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
+        echo "项目文件列表:"
+        find . -name "*.gradle" -o -name "*.xml" -o -name "*.java" | sort
+        echo "Gradle Wrapper文件:"
+        ls -la gradle/wrapper/ || echo "gradle/wrapper目录不存在"
+        ls -la gradlew || echo "gradlew文件不存在"
       
-    - name: Build APK
+    - name: Build with debug info
       run: |
         cd IPTVApp
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --info --no-daemon
       
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: iptv-app
         path: IPTVApp/app/build/outputs/apk/debug/app-debug.apk
+        
+    - name: Upload build logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-failure-logs
+        path: |
+          IPTVApp/app/build/reports/
+          IPTVApp/build/reports/
